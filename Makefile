@@ -1,25 +1,44 @@
-.PHONY: setup install test lint format pre-commit clean
+GIT_BRANCH := $(shell git symbolic-ref --short HEAD 2>/dev/null)
+GIT_COMMIT := $(shell git log -1 --pretty=%H)
 
-# Install project in editable mode + dev deps
-setup:
-	source .venv/bin/activate
-	uv sync --all-extras
+.PHONY: help install install-all test lint format pre-commit clean reset print-version
+
+help: ## Show this help message
+	@echo "============================================================================"
+	@grep -E '^[a-zA-Z0-9_.-]+:.*##' $(MAKEFILE_LIST) \
+		| sed -e 's/:.*##/: /'
+	@echo "============================================================================"
+
+.venv: ## Ensure virtual environment exists
+	@test -d .venv || uv venv
+
+install-all: .venv ## Install all dependencies and dev tools
+	uv sync --all-extras --dev
 	direnv allow
-	pre-commit install
-	pre-commit run --all-files
+	uv run pre-commit install
 
-# Run tests
-test:
+install: .venv ## Install production dependencies only
+	uv sync
+
+test: ## Run tests
 	uv run pytest tests
 
-# Run linter
-lint:
+lint: ## Run linter
 	uv run ruff check src tests
 
-# Auto-format code
-format:
+format: ## Auto-format code
 	uv run ruff format src tests
 
-# Run pre-commit hooks on all files
-pre-commit:
+pre-commit: ## Run pre-commit hooks on all files
 	uv run pre-commit run --all-files
+
+clean: ## Clean up build and cache files
+	rm -rf .pytest_cache .ruff_cache
+
+reset: ## Remove venv and reinstall everything
+	rm -rf .venv
+	make install-all
+
+print-version: ## Print current Git branch, commit
+	@echo "Branch: $(GIT_BRANCH)"
+	@echo "Commit: $(GIT_COMMIT)"
