@@ -8,4 +8,4 @@
 
 ## Setup
 
-`make setup`
+`make install-all`
