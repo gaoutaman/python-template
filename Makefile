@@ -25,6 +25,7 @@ test: ## Run tests
 
 lint: ## Run linter
 	uv run ruff check src tests
+	uv run ty check src test
 
 format: ## Auto-format code
 	uv run ruff format src tests
